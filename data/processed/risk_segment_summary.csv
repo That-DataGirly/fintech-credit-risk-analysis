@@ -1,0 +1,5 @@
+Risk_Segment,Borrowers,Actual_Adverse_Loans,Average_Predicted_Risk,Actual_Adverse_Rate
+Low Risk,500,6,1.6975022061465221,1.2
+Moderate Risk,500,8,6.163494247492708,1.6
+High Risk,500,10,15.401467511175845,2.0
+Very High Risk,500,12,46.63248517143372,2.4
