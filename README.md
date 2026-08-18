@@ -61,7 +61,8 @@ The project follows the following workflow:
 12. Credit-risk driver analysis
 13. Borrower risk scoring
 14. Risk segmentation
-15. Business recommendations
+15. Classification threshold optimization
+16. Business recommendations
 
 ---
 
@@ -88,25 +89,6 @@ This provides a more appropriate target for examining repayment difficulty withi
 
 Two classification models were developed:
 
-## Model Performance
-
-The two models produced the following results:
-
-| Model | Adverse Precision | Adverse Recall | Adverse F1-Score | ROC-AUC |
-|---|---:|---:|---:|---:|
-| Logistic Regression | 0.034 | 0.167 | 0.057 | 0.579 |
-| Random Forest | 0.000 | 0.000 | 0.000 | 0.598 |
-
-The results demonstrate the difficulty of predicting adverse loan outcomes within this dataset.
-
-Random Forest achieved the higher ROC-AUC score (0.598), indicating slightly better overall ranking ability. However, at the default classification threshold, it failed to identify any adverse loans.
-
-Logistic Regression achieved an adverse-loan recall of 16.7%, meaning it identified some adverse cases, but its low precision indicates a high number of false-positive classifications.
-
-Neither model currently demonstrates sufficient predictive performance for use as a standalone credit-decision system.
-
-The results highlight an important practical lesson in applied data science: model development does not always produce a highly predictive solution. Dataset limitations, class imbalance, target construction, feature availability, and the maturity of loan outcomes can significantly affect model performance.
-
 ### Logistic Regression
 
 Used as an interpretable baseline model and to examine the relationship between borrower characteristics and predicted credit risk.
@@ -126,6 +108,48 @@ Model performance was evaluated using:
 - Confusion matrices
 
 Accuracy was not used as the primary decision metric because of the highly imbalanced target.
+
+---
+
+## Model Performance
+
+The two models produced the following results:
+
+| Model | Adverse Precision | Adverse Recall | Adverse F1-Score | ROC-AUC |
+|---|---:|---:|---:|---:|
+| Logistic Regression | 0.034 | 0.167 | 0.057 | 0.579 |
+| Random Forest | 0.000 | 0.000 | 0.000 | 0.598 |
+
+The results demonstrate the difficulty of predicting adverse loan outcomes within this dataset.
+
+Random Forest achieved the higher ROC-AUC score (0.598), indicating slightly better overall ranking ability. However, at the default classification threshold, it failed to identify any adverse loans.
+
+Logistic Regression achieved an adverse-loan recall of 16.7%, meaning it identified some adverse cases, but its low precision indicates a high number of false-positive classifications.
+
+Neither model currently demonstrates sufficient predictive performance for use as a standalone credit-decision system.
+
+The results highlight an important practical lesson in applied data science: model development does not always produce a highly predictive solution. Dataset limitations, class imbalance, target construction, feature availability, and the maturity of loan outcomes can significantly affect model performance.
+
+---
+
+## Classification Threshold Optimization
+
+Because the adverse-loan class is highly imbalanced, the default 0.50 classification threshold may not provide the most useful balance between identifying risky borrowers and generating false positives.
+
+Alternative probability thresholds were evaluated for the Logistic Regression model to assess the trade-off between adverse-class precision, recall, F1 score, and the number of borrowers flagged for review.
+
+Among the thresholds evaluated, **0.40 produced the highest adverse-class F1 score of 0.070**, compared with 0.057 at the default 0.50 threshold.
+
+At the 0.40 threshold:
+
+- Adverse precision: **3.5%**
+- Adverse recall: **25.0%**
+- Adverse F1 score: **0.070**
+- Borrowers flagged for review: **221**
+
+Lower thresholds produced substantially higher recall but also generated considerably more false-positive classifications. For example, a threshold of 0.10 increased adverse recall to 61.1% but reduced precision to 2.3% and flagged 961 borrowers.
+
+The results demonstrate that threshold adjustment can improve the trade-off between identifying adverse borrowers and the operational burden created by additional reviews. However, low precision across all evaluated thresholds indicates that threshold optimization alone cannot overcome the underlying limitations of the model and dataset.
 
 ---
 
@@ -150,13 +174,15 @@ However, predicted probabilities were substantially higher than observed adverse
 
 ## Business Recommendations
 
-The analysis suggests several potential applications for a fintech lender:
+The analysis suggests several potential applications and next steps for a fintech lender:
 
 - Use model-generated risk rankings to prioritize applications requiring additional underwriting review.
 - Apply enhanced affordability and credit-history assessments to borrowers identified as higher risk.
 - Support more streamlined processing for lower-risk applicants while maintaining existing underwriting requirements.
 - Use risk segmentation to prioritize portfolio monitoring and early intervention.
-- Improve probability calibration before using predicted scores as absolute risk probabilities.
+- Improve probability calibration before interpreting predicted scores as absolute risk probabilities.
+- Consider a lower classification threshold, such as 0.40, for risk-screening purposes where identifying additional adverse borrowers justifies the additional review burden.
+- Determine production thresholds based on the business costs of false negatives and false positives rather than model metrics alone.
 - Use predictive analytics as a decision-support mechanism rather than replacing established lending controls and human judgment.
 
 ---
@@ -172,6 +198,7 @@ Important limitations include:
 - A broader adverse-status definition was required
 - Many loans remain active and their ultimate outcomes are unknown
 - Predicted probabilities require further calibration
+- Threshold optimization produced only a modest improvement in classification performance
 - No external or temporal validation has been performed
 - Additional fairness, governance, regulatory, and model-monitoring assessments would be required before production use
 
@@ -211,16 +238,22 @@ fintech-credit-risk-analysis/
 ├── .gitignore
 ├── requirements.txt
 └── README.md
+```
 
+---
 
 ## Conclusion
 
-This project demonstrates an end-to-end application of business analytics and machine learning to a fintech credit-risk problem.
+This project demonstrates an end-to-end application of business analytics and machine learning to a fintech credit-risk problem, from data preparation and exploratory analysis through predictive modelling, risk segmentation, threshold optimization, and business decision support.
 
-The modelling results also illustrate an important reality of applied data science: not every dataset produces a highly predictive model. Both models demonstrated limited classification performance, largely within the context of a highly imbalanced target and limited observed adverse outcomes.
+The modelling results illustrate an important reality of applied data science: not every dataset produces a highly predictive model. Both Logistic Regression and Random Forest demonstrated limited classification performance, largely within the context of a highly imbalanced target and limited observed adverse loan outcomes.
 
-Despite these limitations, risk segmentation showed a progressive increase in observed adverse rates from 1.20% in the Low Risk segment to 2.40% in the Very High Risk segment, suggesting some ability to rank borrowers by relative risk.
+Despite these limitations, the analysis identified some ability to rank borrowers by relative risk. Observed adverse rates increased progressively from 1.20% among Low Risk borrowers to 2.40% among Very High Risk borrowers.
 
-The appropriate business recommendation is therefore not immediate model deployment, but further data collection, outcome maturation, feature development, probability calibration, threshold optimization, and model validation.
+Threshold optimization further demonstrated the trade-off between identifying additional adverse borrowers and increasing the number of borrowers requiring review. Among the thresholds evaluated, a **0.40 classification threshold produced the highest adverse-class F1 score of 0.070**, compared with 0.057 at the default 0.50 threshold. At 0.40, adverse recall improved to 25.0%, with precision of 3.5% and 221 borrowers flagged for review.
 
-The project demonstrates not only predictive modelling, but the ability to critically evaluate model performance and translate analytical limitations into responsible business recommendations.
+Although threshold optimization produced a modest improvement, precision remained low across all evaluated thresholds. The model should therefore not be deployed as an automated credit-decision system. Instead, its current value is better positioned as an analytical prototype for borrower risk prioritization, portfolio monitoring, and decision support.
+
+The appropriate next steps include further data collection, maturation of loan outcomes, feature development, probability calibration, continued threshold evaluation based on business costs, and rigorous model validation before any production deployment.
+
+Ultimately, this project demonstrates not only the ability to build predictive models, but also the ability to critically evaluate model performance, recognize analytical limitations, quantify business trade-offs, and translate data-science findings into responsible business recommendations.
